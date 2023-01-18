@@ -50,7 +50,8 @@ void Escena::inicializar( int UI_window_width, int UI_window_height )
    //result_shader= new Shader("shaders/first_vertex.vert","shaders/result_triangles2.frag");
    //result_shader= new Shader("shaders/first_vertex.vert","shaders/geometry.gs","shaders/result_triangles3.frag");
    //result_shader= new Shader("shaders/first_vertex.vert","shaders/geometry_pass.gs","shaders/result_triangles2.frag");
-   result_shader_ssbo=new ShaderSSBO("shaders/first_vertex.vert","shaders/geometry_ssbo.gs","shaders/result_triangles_ssbo.frag");
+   result_shader_ssbo=new ShaderSSBO("shaders/first_vertex.vert","shaders/geometry_pass.gs","shaders/result_triangles_ssbo.frag");
+   result_vertex_shader=new ShaderVertexSSBO("shaders/vertex_transformation.vert","shaders/triangles2.frag");
    framebuffer1= new FBO(UI_window_width,UI_window_height);
    projection=camara->setProyeccion();
    view=camara->setObserver();
@@ -91,10 +92,9 @@ void Escena::dibujar()
       framebuffer1->getDepthData();
       shader->stop();
       } else{
-      result_shader_ssbo->use(); 
-      result_shader_ssbo->setMatrix4Float("mvp",1,false,(float*)glm::value_ptr(mvp));
-      result_shader_ssbo->setInt("primitive_num",(int) Escultura->num_caras);
-      result_shader_ssbo->setFloat("d",dvalue);
+      result_vertex_shader->use(); 
+      result_vertex_shader->setMatrix4Float("mvp",1,false,(float*)glm::value_ptr(mvp));
+      result_vertex_shader->setFloat("d",dvalue);
       Escultura->draw();
       framebuffer1->getColorData();
       framebuffer1->getDepthData();
@@ -142,14 +142,13 @@ bool Escena::teclaPulsada( unsigned char tecla, int x, int y )
    switch( toupper(tecla) )
    {
       case 'Q' :
-         if (modoMenu!=NADA)
-            modoMenu=NADA;            
+         if (control!=SELECCION)
+            control=SELECCION;            
          else {
             salir=true ;
          }
          break ;
       case 'O' :
-         // ESTAMOS EN MODO SELECCION DE OBJETO
          if(!camara->isLocked()){
          camara->lock(glm::vec3(0.0,0.0,0.0));
          } else{
@@ -157,12 +156,14 @@ bool Escena::teclaPulsada( unsigned char tecla, int x, int y )
          }
          break ;
         case 'V' :
-         // ESTAMOS EN MODO SELECCION DE MODO DE VISUALIZACION
-         modoMenu=SELVISUALIZACION;
+         if(seleccionado==true){
+            control=VISUALIZACION_CONVEXIDAD;
+         }
          break ;
        case 'D' :
-         // ESTAMOS EN MODO SELECCION DE DIBUJADO
-         modoMenu=SELDIBUJADO;
+         if(seleccionado==true){
+            control=CONVEXIDAD_TRANSFORMADA;
+         }
          break ;
        case '+':
          if(camara->isLocked()){
@@ -183,12 +184,16 @@ bool Escena::teclaPulsada( unsigned char tecla, int x, int y )
          }
        break;
        case 'R':
+       if(control==CONVEXIDAD_TRANSFORMADA){
          dvalue+=0.01;
          std::cout << "Nuevo valor de d" << dvalue << std::endl;
+       }
       break;
       case 'E':
-      dvalue-=0.01;
-      std::cout << "Nuevo valor de d" << dvalue << std::endl;
+       if(control==CONVEXIDAD_TRANSFORMADA){
+         dvalue-=0.01;
+         std::cout << "Nuevo valor de d" << dvalue << std::endl;
+       }
       break;
          // COMPLETAR con los diferentes opciones de teclado
             
@@ -281,10 +286,12 @@ void Escena::clickRaton( int boton, int estado, int x, int y)
 
    else if( boton == GLUT_LEFT_BUTTON ){
       if(estado == GLUT_DOWN){
+         if(control==SELECCION){
          algoritmo->iniciaAlgoritmo(x,y);
          algoritmo->setValues(framebuffer1->colordata,framebuffer1->depthdata);
          algoritmo->run();
          primitivas_resultados();
+      }
       }
    }
    else if ( boton == 4 )
@@ -359,6 +366,11 @@ void Escena::primitivas_resultados(){
       }
    }
    std::cout << "Vertices afectados " << indice_vertices.size() << std::endl;
+   result_vertex_shader->use();
+      result_vertex_shader->updateSSBOData(indice_vertices);
+      result_vertex_shader->sendSSBOData();
+      result_vertex_shader->setvec4float("plane",plano);
+      result_vertex_shader->stop();
 
 
 }

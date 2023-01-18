@@ -11,8 +11,9 @@
 #include "algoritmo.h"
 #include "ShaderUBO.h"
 #include "ShaderSSBO.h"
+#include "ShadervertexSSBO.h"
 
-typedef enum {NADA, SELOBJETO,SELVISUALIZACION,SELDIBUJADO} menu;
+typedef enum {SELECCION,VISUALIZACION_CONVEXIDAD,CONVEXIDAD_TRANSFORMADA} visualizacion;
 class Escena
 {
 
@@ -33,6 +34,8 @@ class Escena
    glm::mat4 projection;
    glm::mat4 mvp;
    int indice_textura_resultados;
+   bool seleccionado=false;
+   visualizacion control=SELECCION;
 
    // variables que controlan la ventana y la transformacion de perspectiva
    GLfloat Width, Height, Front_plane, Back_plane;
@@ -51,6 +54,7 @@ class Escena
    Shader* result_shader;
    Shader* render_shader;
    ShaderSSBO* result_shader_ssbo;
+   ShaderVertexSSBO* result_vertex_shader;
    FBO* framebuffer1;
    // Objetos de la escena
    Ejes ejes;
@@ -79,6 +83,7 @@ class Escena
    void updatemvp(Shader * shader);
    float* getMVP(float* mv, float* p);
    void primitivas_resultados();
+   void save_modified_PLY();
 
 };
 #endif

@@ -1,5 +1,5 @@
-#ifndef SHADERSSBO_H
-#define SHADERSSBO_H
+#ifndef SHADERVertexSSBO_H
+#define SHADERVertexSSBO_H
 
 #include <string>
 #include <fstream>
@@ -9,18 +9,18 @@
 #include "shader.h"
 #include <vector>
 
-struct primitivas_ssbo{
-    int primitivas_afectadas;
-    std::vector<int> primitivas;
+struct vertices_ssbo{
+    int vertices_afectadas;
+    std::vector<int> vertices;
 };
 
-class ShaderSSBO :public Shader{
+class ShaderVertexSSBO :public Shader{
     private:
     unsigned int ssboID;
-    primitivas_ssbo ssboData;
+    vertices_ssbo ssboData;
     public:
-    ShaderSSBO(const char* vertexPath, const char* geometryPath, const char* fragmentPath);
-    void updateSSBOData(std::vector<int> primitivas);
+    ShaderVertexSSBO(const char* vertexPath, const char* fragmentPath);
+    void updateSSBOData(std::vector<int> vertices);
     void sendSSBOData();
 };
 
