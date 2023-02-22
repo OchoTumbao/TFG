@@ -1,0 +1,11 @@
+name: Lint & Spell Check LaTeX document
+on: [push]
+jobs:
+    lint_and_spell_check_latex:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+            - uses: ChiefGokhlayeh/textidote-action@v5
+              with:
+                  root_file: docs/proyecto.tex
+                  args: --check es --dict es_ES.dict
