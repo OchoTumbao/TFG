@@ -8,4 +8,4 @@ jobs:
             - uses: ChiefGokhlayeh/textidote-action@v5
               with:
                   root_file: docs/proyecto.tex
-                  args: --check es --dict es_ES.dict
+                  args: --check es
