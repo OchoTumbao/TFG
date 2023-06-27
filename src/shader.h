@@ -19,6 +19,7 @@ class Shader
     void setInt(const std::string &name, int value) const;   
     void setFloat(const std::string &name, float value) const;
     void setMatrix4Float(const std::string &name, int amount, bool transpose, float* value) const;
+    void setvector1integer(const std::string &name,int amount, int* value) const;
 
 };
 

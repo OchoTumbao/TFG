@@ -96,3 +96,7 @@ void Shader::setMatrix4Float(const std::string &name, int amount, bool transpose
         glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()),amount,GL_FALSE,value);
     }
 }
+
+void Shader::setvector1integer(const std::string &name,int amount, int* value) const{
+    glUniform1iv(glGetUniformLocation(ID, name.c_str()),amount,value);
+}

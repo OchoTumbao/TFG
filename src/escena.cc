@@ -4,6 +4,8 @@
 #include "escena.h"
 #include "malla.h" // objetos: Cubo y otros....
 #include <iostream>
+#include <vector>
+#include <algorithm>
 
 //**************************************************************************
 // constructor de la escena (no puede usar ordenes de OpenGL)
@@ -11,9 +13,9 @@
 
 Escena::Escena()
 {
-    Front_plane       = 20.0;
-    Back_plane        = 50.0;
-    Observer_distance = 4*Front_plane;
+    Front_plane       = 10.0;
+    Back_plane        = 30.0;
+    Observer_distance = 3*Front_plane;
     Observer_angle_x  = 0.0 ;
     Observer_angle_y  = 0.0 ;
 
@@ -22,8 +24,8 @@ Escena::Escena()
     // crear los objetos de la escena....
     // .......completar: ...
     // .....
-    Escultura= new ObjPLY("plys/beethoven.ply");
-    camara=new Camara(PERSPECTIVA,{0.0,0.0,30.0},{0.0,0.0,-1.0});
+    Escultura= new ObjPLY("plys/Bearded_guy.ply");
+    camara=new Camara(PERSPECTIVA,{0.0,0.0,20.0},{0.0,0.0,-1.0});
 
 }
 
@@ -42,12 +44,14 @@ void Escena::inicializar( int UI_window_width, int UI_window_height )
 	Width  = UI_window_width/10;
 	Height = UI_window_height/10;
 
-   shader= new Shader("shaders/first_vertex.vert","shaders/triangles.frag");
+   shader= new Shader("shaders/first_vertex.vert","shaders/triangles2.frag");
    render_shader= new Shader("shaders/render_shader.vert","shaders/render_depth.frag");
+   result_shader= new Shader("shaders/first_vertex.vert","shaders/result_triangles2.frag");
    framebuffer1= new FBO(UI_window_width,UI_window_height);
    projection=camara->setProyeccion();
    view=camara->setObserver();
    model=glm::mat4(1.0f);
+   model=glm::scale(model,glm::vec3(3.3,3.3,3.3));
    renderQuad=new Quad(framebuffer1->textureColorid);
    algoritmo=new Algoritmo(UI_window_width,UI_window_height);
 	glViewport( 0, 0, UI_window_width, UI_window_height );
@@ -72,13 +76,24 @@ void Escena::dibujar()
     if(framebuffer1->is_complete()){
    	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );  
       glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+      if(!algoritmo->isOver()){
       shader->use(); 
       shader->setMatrix4Float("mvp",1,false,(float*)glm::value_ptr(mvp));
       shader->setInt("primitive_num",(int) Escultura->num_caras);
+      
       Escultura->draw();
       framebuffer1->getColorData();
       framebuffer1->getDepthData();
       shader->stop();
+      } else{
+      result_shader->use(); 
+      result_shader->setMatrix4Float("mvp",1,false,(float*)glm::value_ptr(mvp));
+      result_shader->setInt("primitive_num",(int) Escultura->num_caras);
+      Escultura->draw();
+      framebuffer1->getColorData();
+      framebuffer1->getDepthData();
+      result_shader->stop();
+      }
 
     }
    framebuffer1->stop();
@@ -88,7 +103,7 @@ void Escena::dibujar()
     glClearColor( 1.0, 1.0, 1.0, 1.0 );
     
     render_shader->use();
-    render_shader->setInt("sceneTexture",framebuffer1->t);
+    render_shader->setInt("sceneTexture",framebuffer1->textureColorid);
     renderQuad->draw();
     render_shader->stop();
     
@@ -245,6 +260,7 @@ void Escena::clickRaton( int boton, int estado, int x, int y)
          algoritmo->iniciaAlgoritmo(x,y);
          algoritmo->setValues(framebuffer1->colordata,framebuffer1->depthdata);
          algoritmo->run();
+         primitivas_resultados();
       }
    }
    else if ( boton == 4 )
@@ -261,6 +277,35 @@ void Escena::clickRaton( int boton, int estado, int x, int y)
       view=camara->setObserver();
    }
 
+}
+
+void Escena::primitivas_resultados(){
+   std::vector<int> primitivas;
+   for(int i=0;i<algoritmo->width*algoritmo->heigth;i++){
+      if(algoritmo->resultados[i]==true){
+         std::cout << "Estoy mirando el pixel " << i/algoritmo->width << "," << i%algoritmo->width << std::endl;
+         //std::cout << "Valor del array "<< algoritmo->resultados[i] << std::endl;
+         int id_primitiva=(framebuffer1->colordata[i*3])*pow(255,2)+(framebuffer1->colordata[i*3+1])*255+framebuffer1->colordata[i*3+2];
+         //int id_primitiva=framebuffer1->colordata[i*3]*(1.0f/Escultura->num_caras);
+         //std::cout << "El valor de Rojo de este pixel es: " <<(float) framebuffer1->colordata[i*4] << std::endl;
+         //std::cout << "Primitiva con ID " << id_primitiva << std::endl;
+         if( std::find(primitivas.begin(),primitivas.end(),id_primitiva) == primitivas.end()){
+         std::cout << "El valor de Rojo de este pixel es: " <<(float) framebuffer1->colordata[i*3] << std::endl;
+         std::cout << "El valor de Verde de este pixel es: " <<(float) framebuffer1->colordata[i*3+1] << std::endl;
+         std::cout << "El valor de Azul de este pixel es: " <<(float) framebuffer1->colordata[i*3+2] << std::endl;
+         //std::cout << "El valor de Alpha de este pixel es: " <<(float) framebuffer1->colordata[i*4+3] << std::endl;
+         std::cout << (255.0f/ Escultura->num_caras) << std::endl;
+         std::cout << "Primitiva con ID " << id_primitiva << std::endl;
+         std::cout << "Estoy mirando el pixel " << i/algoritmo->width << "," << i%algoritmo->width << std::endl;
+         primitivas.push_back(id_primitiva);
+         }
+      }
+   }
+   std::cout << "Primitivas afectadas: " << primitivas.size() << std::endl;
+   result_shader->use();
+      result_shader->setvector1integer("primitivas",primitivas.size(),&primitivas[0]);
+      result_shader->setInt("primitivas_afectadas",primitivas.size());
+   result_shader->stop();
 }
 
 

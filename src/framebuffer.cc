@@ -8,6 +8,7 @@ FBO::FBO(int window_width,int window_height){
     glGenTextures(1,&textureColorid);
     glBindTexture(GL_TEXTURE_2D,textureColorid);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,texture_width , texture_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,texture_width , texture_height, 0, GL_RGB, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorid, 0);
@@ -62,6 +63,7 @@ void FBO::getDepthData(){
 void FBO::getColorData(){
     GLubyte * pixels= (GLubyte*) malloc(texture_width*texture_height*sizeof(GLfloat));
      glReadPixels(0,0,texture_width,texture_height,GL_RGB,GL_UNSIGNED_BYTE,pixels);
+     //glReadPixels(0,0,texture_width,texture_height,GL_RGB,GL_FLOAT,pixels);
      colordata=pixels;
      /*glBindTexture(GL_TEXTURE_2D,textureColorid);
     glGetTexImage(GL_TEXTURE_2D,0,GL_RGB,GL_UNSIGNED_BYTE,colordata);

@@ -5,12 +5,9 @@ enum Estado {FASE1,FASE2,FINALIZADO};
 
 class Algoritmo{
     private:
-    int width;
-    int heigth;
     GLfloat* depth;
     GLubyte* colors;
     bool* visitados=nullptr;
-    bool* resultados=nullptr;
     glm::vec2 actual;
     bool finished;
     Estado estado;
@@ -31,7 +28,10 @@ class Algoritmo{
     void setResultado(int x, int y, bool value);
     void iniciaAlgoritmo(int x_ini, int y_ini);
     void expandeNodo(glm::vec2 nodo);
-    void setTexturaResultados(int* indiceTextura);
+    bool isOver();
+    bool* resultados=nullptr;
+    int width;
+    int heigth;
     
     
 };

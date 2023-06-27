@@ -30,6 +30,7 @@ class Escena
    glm::mat4 view;
    glm::mat4 projection;
    glm::mat4 mvp;
+   int indice_textura_resultados;
 
    // variables que controlan la ventana y la transformacion de perspectiva
    GLfloat Width, Height, Front_plane, Back_plane;
@@ -45,6 +46,7 @@ class Escena
    Camara * camara;
    menu modoMenu=NADA;
    Shader* shader;
+   Shader* result_shader;
    Shader* render_shader;
    FBO* framebuffer1;
    // Objetos de la escena
@@ -72,6 +74,7 @@ class Escena
    void clickRaton( int boton, int estado, int x, int y);
    void updatemvp(Shader * shader);
    float* getMVP(float* mv, float* p);
+   void primitivas_resultados();
 
 };
 #endif
