@@ -14,8 +14,8 @@
 Escena::Escena()
 {
     Front_plane       = 10.0;
-    Back_plane        = 30.0;
-    Observer_distance = 3*Front_plane;
+    Back_plane        = 100.0;
+    Observer_distance = 1*Front_plane;
     Observer_angle_x  = 0.0 ;
     Observer_angle_y  = 0.0 ;
 
@@ -24,8 +24,9 @@ Escena::Escena()
     // crear los objetos de la escena....
     // .......completar: ...
     // .....
-    Escultura= new ObjPLY("plys/Bearded_guy.ply");
-    camara=new Camara(PERSPECTIVA,{0.0,0.0,20.0},{0.0,0.0,-1.0});
+    Escultura= new ObjPLY("plys/PLY_Pasha.ply");
+    //Escultura= new ObjPLY("plys/beethoven.ply");
+    camara=new Camara(PERSPECTIVA,{0.0,0.0,60.0},{0.0,0.0,-1.0});
 
 }
 
@@ -46,14 +47,18 @@ void Escena::inicializar( int UI_window_width, int UI_window_height )
 
    shader= new Shader("shaders/first_vertex.vert","shaders/triangles2.frag");
    render_shader= new Shader("shaders/render_shader.vert","shaders/render_depth.frag");
-   result_shader= new Shader("shaders/first_vertex.vert","shaders/result_triangles2.frag");
+   //result_shader= new Shader("shaders/first_vertex.vert","shaders/result_triangles2.frag");
+   //result_shader= new Shader("shaders/first_vertex.vert","shaders/geometry.gs","shaders/result_triangles3.frag");
+   //result_shader= new Shader("shaders/first_vertex.vert","shaders/geometry_pass.gs","shaders/result_triangles2.frag");
+   result_shader_ssbo=new ShaderSSBO("shaders/first_vertex.vert","shaders/geometry_ssbo.gs","shaders/result_triangles_ssbo.frag");
    framebuffer1= new FBO(UI_window_width,UI_window_height);
    projection=camara->setProyeccion();
    view=camara->setObserver();
    model=glm::mat4(1.0f);
-   model=glm::scale(model,glm::vec3(3.3,3.3,3.3));
+   //model=glm::scale(model,glm::vec3(5.3,5.3,5.3));
+   model=glm::scale(model,glm::vec3(0.3,0.3,0.3));
    renderQuad=new Quad(framebuffer1->textureColorid);
-   algoritmo=new Algoritmo(UI_window_width,UI_window_height);
+   algoritmo=new Algoritmo(UI_window_width,UI_window_height,camara->far, camara->near);
 	glViewport( 0, 0, UI_window_width, UI_window_height );
    
 }
@@ -86,13 +91,13 @@ void Escena::dibujar()
       framebuffer1->getDepthData();
       shader->stop();
       } else{
-      result_shader->use(); 
-      result_shader->setMatrix4Float("mvp",1,false,(float*)glm::value_ptr(mvp));
-      result_shader->setInt("primitive_num",(int) Escultura->num_caras);
+      result_shader_ssbo->use(); 
+      result_shader_ssbo->setMatrix4Float("mvp",1,false,(float*)glm::value_ptr(mvp));
+      result_shader_ssbo->setInt("primitive_num",(int) Escultura->num_caras);
       Escultura->draw();
       framebuffer1->getColorData();
       framebuffer1->getDepthData();
-      result_shader->stop();
+      result_shader_ssbo->stop();
       }
 
     }
@@ -283,29 +288,47 @@ void Escena::primitivas_resultados(){
    std::vector<int> primitivas;
    for(int i=0;i<algoritmo->width*algoritmo->heigth;i++){
       if(algoritmo->resultados[i]==true){
-         std::cout << "Estoy mirando el pixel " << i/algoritmo->width << "," << i%algoritmo->width << std::endl;
+         //std::cout << "Estoy mirando el pixel " << i/algoritmo->width << "," << i%algoritmo->width << std::endl;
          //std::cout << "Valor del array "<< algoritmo->resultados[i] << std::endl;
          int id_primitiva=(framebuffer1->colordata[i*3])*pow(255,2)+(framebuffer1->colordata[i*3+1])*255+framebuffer1->colordata[i*3+2];
          //int id_primitiva=framebuffer1->colordata[i*3]*(1.0f/Escultura->num_caras);
          //std::cout << "El valor de Rojo de este pixel es: " <<(float) framebuffer1->colordata[i*4] << std::endl;
          //std::cout << "Primitiva con ID " << id_primitiva << std::endl;
          if( std::find(primitivas.begin(),primitivas.end(),id_primitiva) == primitivas.end()){
-         std::cout << "El valor de Rojo de este pixel es: " <<(float) framebuffer1->colordata[i*3] << std::endl;
+         /*std::cout << "El valor de Rojo de este pixel es: " <<(float) framebuffer1->colordata[i*3] << std::endl;
          std::cout << "El valor de Verde de este pixel es: " <<(float) framebuffer1->colordata[i*3+1] << std::endl;
          std::cout << "El valor de Azul de este pixel es: " <<(float) framebuffer1->colordata[i*3+2] << std::endl;
          //std::cout << "El valor de Alpha de este pixel es: " <<(float) framebuffer1->colordata[i*4+3] << std::endl;
          std::cout << (255.0f/ Escultura->num_caras) << std::endl;
          std::cout << "Primitiva con ID " << id_primitiva << std::endl;
-         std::cout << "Estoy mirando el pixel " << i/algoritmo->width << "," << i%algoritmo->width << std::endl;
+         std::cout << "Estoy mirando el pixel " << i/algoritmo->width << "," << i%algoritmo->width << std::endl;*/
          primitivas.push_back(id_primitiva);
          }
       }
    }
    std::cout << "Primitivas afectadas: " << primitivas.size() << std::endl;
-   result_shader->use();
-      result_shader->setvector1integer("primitivas",primitivas.size(),&primitivas[0]);
-      result_shader->setInt("primitivas_afectadas",primitivas.size());
-   result_shader->stop();
+   float zplane=algoritmo->mayor_profundidad;
+   //float zplane=0.0;
+   glm::vec3 perpendicular=camara->at-camara->eye;
+   std::cout <<"eye: "<< camara->eye.x << "," << camara->eye.y << "," << camara->eye.z << std::endl;
+   std::cout <<"at: "<< camara->at.x << "," << camara->at.y << "," << camara->at.z << std::endl;
+   std::cout <<"perpendicular: "<< perpendicular.x << "," << perpendicular.y << "," << perpendicular.z << std::endl;
+   float factor=zplane/perpendicular.z;
+   std::cout << "factor: " << factor << std::endl;
+   glm::vec3 punto=perpendicular*factor;
+   glm::vec4 plano=glm::vec4(perpendicular.x,perpendicular.y,perpendicular.z,(-(perpendicular.x*punto.x+perpendicular.y*punto.y+perpendicular.z*punto.z)));
+   std::cout <<"zplane: "<< zplane << std::endl;
+   std::cout <<"punto: "<< punto.x << "," << punto.y << "," << punto.z << std::endl;
+   std::cout <<"plano: "<< plano.x << "," << plano.y << "," << plano.z << "," << plano.w << std::endl;
+      std::cout << "OHO" << std::endl;
+      result_shader_ssbo->use();
+      result_shader_ssbo->updateSSBOData(primitivas);
+      result_shader_ssbo->sendSSBOData();
+      result_shader_ssbo->setvec4float("plane",plano);
+      result_shader_ssbo->setFloat("d",1.0f);
+      result_shader_ssbo->stop();
+
+      std::cout << "OHO" << std::endl;
 }
 
 

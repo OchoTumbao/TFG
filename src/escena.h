@@ -9,6 +9,8 @@
 #include "framebuffer.h"
 #include "quad.h"
 #include "algoritmo.h"
+#include "ShaderUBO.h"
+#include "ShaderSSBO.h"
 
 typedef enum {NADA, SELOBJETO,SELVISUALIZACION,SELDIBUJADO} menu;
 class Escena
@@ -48,6 +50,7 @@ class Escena
    Shader* shader;
    Shader* result_shader;
    Shader* render_shader;
+   ShaderSSBO* result_shader_ssbo;
    FBO* framebuffer1;
    // Objetos de la escena
    Ejes ejes;

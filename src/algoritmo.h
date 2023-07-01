@@ -12,9 +12,10 @@ class Algoritmo{
     bool finished;
     Estado estado;
     std::queue<glm::vec2> expand;
+    float far, near;
     
     public:
-    Algoritmo(int width, int heigth);
+    Algoritmo(int width, int heigth,float far, float near);
 
     glm::vec2 generaMejorVecino();
     void resetvisitados();
@@ -29,6 +30,8 @@ class Algoritmo{
     void iniciaAlgoritmo(int x_ini, int y_ini);
     void expandeNodo(glm::vec2 nodo);
     bool isOver();
+    float getTrueZvalue(int x, int y);
+    float mayor_profundidad=0.0f;
     bool* resultados=nullptr;
     int width;
     int heigth;

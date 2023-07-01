@@ -9,14 +9,12 @@ class Camara
 {
 private:
 
-    glm::vec3 eye;
-    glm::vec3 at;
     glm::vec3 up;
 
     double buff;
 
     int tipo; //ORTOGONAL o Perspectiva
-    float left, right, bottom, top, near, far; //o bien aspect, fov, near, far
+    float left, right, bottom, top; //o bien aspect, fov, near, far
     float leftz, rightz, bottomz, topz; //o bien aspect, fov, near, far
     float factor_zoom = 1;
 
@@ -60,6 +58,9 @@ public:
     void lock(glm::vec3 point);
     void unlock();
     bool isLocked();
+    glm::vec3 eye;
+    glm::vec3 at;
+    float near, far;
     
 } ;
 

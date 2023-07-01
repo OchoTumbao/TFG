@@ -1,9 +1,10 @@
 #include "algoritmo.h"
 
-Algoritmo::Algoritmo(int width, int heigth){
+Algoritmo::Algoritmo(int width, int heigth,float far, float near){
     this->width=width;
     this->heigth=heigth;
-
+    this->far=far;
+    this->near=near;
 }
 
 void Algoritmo::setValues(GLubyte * color, GLfloat * depth){
@@ -17,11 +18,6 @@ void Algoritmo::setValues(GLubyte * color, GLfloat * depth){
     for(int i=0;i<width*heigth;i++){
         resultados[i]=false;
     }
-    for(int i=0;i<width*heigth;i++){
-        if(visitados[i]==true){
-            std::cout << "ME CAGO EN DIOS" << std::endl;
-        }
-    }
 }
 
 void Algoritmo::resetvisitados(){
@@ -34,6 +30,7 @@ void Algoritmo::resetvisitados(){
 
 void Algoritmo::iniciaAlgoritmo(int x_ini, int y_ini){
     actual=glm::vec2(x_ini,y_ini);
+    mayor_profundidad=0.0;
     estado=FASE1;
 }
 
@@ -129,6 +126,10 @@ void Algoritmo::expandeNodo(glm::vec2 nodo){
         float depth_nodo=getDepth(nodo[0],nodo[1]);
         //std::cout << "Visitando "<< nodo[0] << "," << nodo[1] << std::endl;
         float depth_comprobada;
+        if(depth_nodo>mayor_profundidad){
+            std::cout << "Nodo con mayor profundidad" << getTrueZvalue(nodo[0],nodo[1]) << std::endl;
+            mayor_profundidad=getTrueZvalue(nodo[0],nodo[1]);
+        }
         for(int y=nodo[1]-1;y<=nodo[1]+1;y++){
         if(y>=0 && y<heigth){
             for(int x=nodo[0]-1;x<=nodo[0]+1;x++){
@@ -155,6 +156,7 @@ void Algoritmo::expandeNodo(glm::vec2 nodo){
 
 void Algoritmo::run(){
     std::cout << "Nodo inicial " << actual[0] << "," << actual[1] << std::endl;
+    mayor_profundidad=0.0;
     while(estado!=FINALIZADO){
         Nextstep();
     }
@@ -164,5 +166,11 @@ void Algoritmo::run(){
 
 bool Algoritmo::isOver(){
     return estado==FINALIZADO;
+}
+
+float Algoritmo::getTrueZvalue(int x, int y){
+    float z_b=getDepth(x,y);
+    float z_e = 2*far*near / (far + near + (far - near)*(2*z_b -1));
+    return z_e;
 }
 

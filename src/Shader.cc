@@ -68,6 +68,96 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath){
     
 }
 
+Shader::Shader(const char* vertexPath, const char* geometryPath, const char* fragmentPath){
+    std::string vertexCode;
+    std::string fragmentCode;
+    std::string geometryCode;
+    std::ifstream vShaderFile;
+    std::ifstream fShaderFile;
+    std::ifstream gShaderFile;
+    vShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
+    fShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
+    gShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
+    try{
+        vShaderFile.open(vertexPath);
+        fShaderFile.open(fragmentPath);
+        gShaderFile.open(geometryPath);
+        std::stringstream vShaderStream, fShaderStream, gShaderStream;
+        vShaderStream << vShaderFile.rdbuf();
+        fShaderStream << fShaderFile.rdbuf();
+        gShaderStream << gShaderFile.rdbuf();
+        	
+        vShaderFile.close();
+        fShaderFile.close();
+        gShaderFile.close();
+        vertexCode   = vShaderStream.str();
+        fragmentCode = fShaderStream.str();	
+        geometryCode = gShaderStream.str();
+    }
+    catch(std::ifstream::failure e)
+    {
+        std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
+    }
+    const char* vShaderCode = vertexCode.c_str();
+    const char* fShaderCode = fragmentCode.c_str();
+    const char* gShaderCode = geometryCode.c_str();
+    
+
+    GLuint vertex;
+    GLuint fragment;
+    GLuint geometry;
+    int success;
+    char infoLog[512];
+    vertex = glCreateShader(GL_VERTEX_SHADER);
+    std::cout << "AQUI LLEGO" << std::endl;
+    glShaderSource(vertex, 1, &vShaderCode, NULL);
+    glCompileShader(vertex);
+    // print compile errors if any
+    glGetShaderiv(vertex, GL_COMPILE_STATUS, &success);
+    if(!success)
+    {
+        glGetShaderInfoLog(vertex, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+    };
+
+    fragment = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragment,1,&fShaderCode,NULL);
+    glCompileShader(fragment);
+    glGetShaderiv(fragment,GL_COMPILE_STATUS,&success);
+    if(!success){
+        glGetShaderInfoLog(fragment,512,NULL,infoLog);
+        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+    }
+
+    geometry = glCreateShader(GL_GEOMETRY_SHADER);
+    glShaderSource(geometry,1,&gShaderCode,NULL);
+    glCompileShader(geometry);
+    glGetShaderiv(geometry,GL_COMPILE_STATUS,&success);
+    if(!success){
+        glGetShaderInfoLog(geometry,512,NULL,infoLog);
+        std::cout << "ERROR::SHADER::GEOMETRY::COMPILATION_FAILED\n" << infoLog << std::endl;
+    }
+
+    ID=glCreateProgram();
+    glAttachShader(ID,vertex);
+    glAttachShader(ID,fragment);
+    glAttachShader(ID,geometry);
+    glLinkProgram(ID);
+
+    glGetProgramiv(ID, GL_LINK_STATUS, &success);
+    if(!success)
+    {
+        glGetProgramInfoLog(ID, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+    }
+    
+    // delete the shaders as they're linked into our program now and no longer necessary
+    glDeleteShader(vertex);
+    glDeleteShader(fragment);
+    glDeleteShader(geometry);
+    
+}
+
 void Shader::use()
 {
     glUseProgram(ID);
@@ -86,7 +176,7 @@ void Shader::setInt(const std::string &name, int value) const{
 }
 
 void Shader::setFloat(const std::string &name, float value) const{
-    glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
+    glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
 }
 
 void Shader::setMatrix4Float(const std::string &name, int amount, bool transpose, float* value) const{
@@ -99,4 +189,8 @@ void Shader::setMatrix4Float(const std::string &name, int amount, bool transpose
 
 void Shader::setvector1integer(const std::string &name,int amount, int* value) const{
     glUniform1iv(glGetUniformLocation(ID, name.c_str()),amount,value);
+}
+
+void Shader::setvec4float(const std::string &name,glm::vec4 value) const {
+    glUniform4f(glGetUniformLocation(ID,name.c_str()),value.x,value.y,value.z,value.w);
 }
