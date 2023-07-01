@@ -100,6 +100,8 @@ void Algoritmo::Nextstep(){
         std::cout << "Nodo final " << actual[0] << "," << actual[1] << std::endl;
         estado=FASE2;
         setResultado(mejorVecino[0],mejorVecino[1],true);
+        mayor_profundidad=getDepth(mejorVecino[0],mejorVecino[1]);
+        z_inicial=getDepth(mejorVecino[0],mejorVecino[1]);
     } else{
         actual=mejorVecino;
     }
@@ -126,9 +128,9 @@ void Algoritmo::expandeNodo(glm::vec2 nodo){
         float depth_nodo=getDepth(nodo[0],nodo[1]);
         //std::cout << "Visitando "<< nodo[0] << "," << nodo[1] << std::endl;
         float depth_comprobada;
-        if(depth_nodo>mayor_profundidad){
-            std::cout << "Nodo con mayor profundidad" << getTrueZvalue(nodo[0],nodo[1]) << std::endl;
-            mayor_profundidad=getTrueZvalue(nodo[0],nodo[1]);
+        if(getDepth(nodo[0],nodo[1])>mayor_profundidad){
+            std::cout << "Nodo con mayor profundidad valor de z=" << getTrueZvalue(nodo[0],nodo[1]) << std::endl;
+            mayor_profundidad=getDepth(nodo[0],nodo[1]);
         }
         for(int y=nodo[1]-1;y<=nodo[1]+1;y++){
         if(y>=0 && y<heigth){
@@ -137,15 +139,13 @@ void Algoritmo::expandeNodo(glm::vec2 nodo){
                 if(getVisitado(x,y)==false){
                     setVisitado(x,y,true);
                 depth_comprobada=getDepth(x,y);
-                if(depth_comprobada>depth_nodo){
+                if(depth_comprobada>depth_nodo && depth_comprobada!=1.0){
                     //std::cout << "Forma parte de la convexidad " << x << "," << y << std::endl;
                     setResultado(x,y,true);
                     expand.push(glm::vec2(x,y));
                     }else{
-                        //setResultado(x,y,false);
+                        setResultado(x,y,false);
                     }
-                } else{
-                    //setResultado(x,y,false);
                 } 
                 }
                 
@@ -160,9 +160,41 @@ void Algoritmo::run(){
     while(estado!=FINALIZADO){
         Nextstep();
     }
+    //depura_resultados();
     //std::cout << "ALGORITMO ACABADO" << std::endl;
 }
 
+
+void Algoritmo::depura_resultados(){
+    for (int x=0;x<width;x++){
+        for(int y=0;y<heigth;y++){
+            if(getResultado(x,y)){
+                int vecinos_convexidad=0;
+            for(int yn=y-1;yn<=y+1;yn++){
+            if(yn>=0 && yn<heigth){
+                for(int xn=x-1;xn<=x+1;xn++){
+                if(xn>=0 && xn<width){
+                    if(getResultado(xn,yn)){
+                        vecinos_convexidad+=1;
+                    }
+                }
+            }
+            }
+            }
+            if(vecinos_convexidad<4){
+                setResultado(x,y,false);
+                //std::cout << "ELIMINO POLIGONO" << std::endl;
+            } else{
+
+            }
+            }
+        }
+    }
+}
+
+bool Algoritmo::getResultado(int x, int y){
+    return resultados[(heigth-y)*width+x];
+}
 
 bool Algoritmo::isOver(){
     return estado==FINALIZADO;
@@ -170,7 +202,7 @@ bool Algoritmo::isOver(){
 
 float Algoritmo::getTrueZvalue(int x, int y){
     float z_b=getDepth(x,y);
-    float z_e = 2*far*near / (far + near + (far - near)*(2*z_b -1));
+    float z_e = 2*far*near / (far + near + (far - near)*(z_b));
     return z_e;
 }
 

@@ -26,12 +26,15 @@ class Algoritmo{
     int getColor(int x, int y);
     bool getVisitado(int x, int y);
     void setVisitado(int x, int y, bool value);
+    bool getResultado(int x, int y);
     void setResultado(int x, int y, bool value);
     void iniciaAlgoritmo(int x_ini, int y_ini);
     void expandeNodo(glm::vec2 nodo);
+    void depura_resultados();
     bool isOver();
     float getTrueZvalue(int x, int y);
     float mayor_profundidad=0.0f;
+    float z_inicial;
     bool* resultados=nullptr;
     int width;
     int heigth;

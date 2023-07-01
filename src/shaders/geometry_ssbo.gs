@@ -11,15 +11,16 @@ int primitivas[];
 uniform float d;
 bool afectada=false;
 uniform mat4 mvp;
+bool z_concavo=false;
 
 
 vec4 nuevoPunto(vec4 Punto){
-    vec4 PuntoOriginal=inverse(mvp)*Punto;
-    float lambda=(((plane.x*PuntoOriginal.x)+(plane.y*PuntoOriginal.y)+(plane.z*PuntoOriginal.z)+plane.w)/(pow(plane.x,2)+pow(plane.y,2)+pow(plane.z,2)))*-1;
-    vec4 Q=vec4(PuntoOriginal.x+(plane.x*lambda),PuntoOriginal.y+(plane.y*lambda),PuntoOriginal.z+(plane.z*lambda),1.0);
+    vec4 PuntoOriginal=Punto;
+    vec4 nuevoplane=mvp*plane;
+    float lambda=(((nuevoplane.x*PuntoOriginal.x)+(nuevoplane.y*PuntoOriginal.y)+(nuevoplane.z*PuntoOriginal.z)+nuevoplane.w)/(-1*(pow(nuevoplane.x,2)+pow(nuevoplane.y,2)+pow(nuevoplane.z,2))));
+    vec4 Q=vec4(PuntoOriginal.x+(nuevoplane.x*lambda),PuntoOriginal.y+(nuevoplane.y*lambda),PuntoOriginal.z+(nuevoplane.z*lambda),PuntoOriginal.w+(nuevoplane.w*lambda));
     vec4 p_res=((PuntoOriginal+d*(PuntoOriginal-Q)));
-    vec4 res=mvp*p_res;
-    return res;
+    return p_res;
 }
 
 void main(){
@@ -28,7 +29,7 @@ void main(){
         if(gl_PrimitiveIDIn==primitivas[i]){
             afectada=true;
         }
-    }
+        }
     if(afectada==true){
     gl_Position =nuevoPunto(gl_in[0].gl_Position);
     EmitVertex();

@@ -58,6 +58,7 @@ class Escena
    float xant = 0, yant = 0;
    Quad * renderQuad=nullptr;
    Algoritmo * algoritmo=nullptr;
+   float dvalue=0.0f;
 
    
    public:

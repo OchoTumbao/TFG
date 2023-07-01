@@ -56,7 +56,7 @@ void Escena::inicializar( int UI_window_width, int UI_window_height )
    view=camara->setObserver();
    model=glm::mat4(1.0f);
    //model=glm::scale(model,glm::vec3(5.3,5.3,5.3));
-   model=glm::scale(model,glm::vec3(0.3,0.3,0.3));
+   //model=glm::scale(model,glm::vec3(0.3,0.3,0.3));
    renderQuad=new Quad(framebuffer1->textureColorid);
    algoritmo=new Algoritmo(UI_window_width,UI_window_height,camara->far, camara->near);
 	glViewport( 0, 0, UI_window_width, UI_window_height );
@@ -94,6 +94,7 @@ void Escena::dibujar()
       result_shader_ssbo->use(); 
       result_shader_ssbo->setMatrix4Float("mvp",1,false,(float*)glm::value_ptr(mvp));
       result_shader_ssbo->setInt("primitive_num",(int) Escultura->num_caras);
+      result_shader_ssbo->setFloat("d",dvalue);
       Escultura->draw();
       framebuffer1->getColorData();
       framebuffer1->getDepthData();
@@ -149,7 +150,11 @@ bool Escena::teclaPulsada( unsigned char tecla, int x, int y )
          break ;
       case 'O' :
          // ESTAMOS EN MODO SELECCION DE OBJETO
+         if(!camara->isLocked()){
          camara->lock(glm::vec3(0.0,0.0,0.0));
+         } else{
+            camara->unlock();
+         }
          break ;
         case 'V' :
          // ESTAMOS EN MODO SELECCION DE MODO DE VISUALIZACION
@@ -163,14 +168,28 @@ bool Escena::teclaPulsada( unsigned char tecla, int x, int y )
          if(camara->isLocked()){
             camara->avanzar(true);
             view=camara->setObserver();
+         } else{
+            camara->avanzar(false);
+            view=camara->setObserver();
          }
        break;
        case '-':
          if(camara->isLocked()){
             camara->retroceder(true);
             view=camara->setObserver();
+         } else{
+            camara->retroceder(false);
+            view=camara->setObserver();
          }
        break;
+       case 'R':
+         dvalue+=0.01;
+         std::cout << "Nuevo valor de d" << dvalue << std::endl;
+      break;
+      case 'E':
+      dvalue-=0.01;
+      std::cout << "Nuevo valor de d" << dvalue << std::endl;
+      break;
          // COMPLETAR con los diferentes opciones de teclado
             
    }
@@ -307,29 +326,43 @@ void Escena::primitivas_resultados(){
       }
    }
    std::cout << "Primitivas afectadas: " << primitivas.size() << std::endl;
-   float zplane=algoritmo->mayor_profundidad;
-   //float zplane=0.0;
-   glm::vec3 perpendicular=camara->at-camara->eye;
+
+   float zplane=(((camara->far-camara->near)*algoritmo->mayor_profundidad)+camara->near);
+   glm::vec3 perpendicular=glm::normalize(camara->at-camara->eye);
    std::cout <<"eye: "<< camara->eye.x << "," << camara->eye.y << "," << camara->eye.z << std::endl;
    std::cout <<"at: "<< camara->at.x << "," << camara->at.y << "," << camara->at.z << std::endl;
    std::cout <<"perpendicular: "<< perpendicular.x << "," << perpendicular.y << "," << perpendicular.z << std::endl;
    float factor=zplane/perpendicular.z;
    std::cout << "factor: " << factor << std::endl;
-   glm::vec3 punto=perpendicular*factor;
-   glm::vec4 plano=glm::vec4(perpendicular.x,perpendicular.y,perpendicular.z,(-(perpendicular.x*punto.x+perpendicular.y*punto.y+perpendicular.z*punto.z)));
+   glm::vec3 punto=(perpendicular*factor)-camara->eye;
+   glm::vec4 plano=glm::vec4(perpendicular.x,perpendicular.y,perpendicular.z,((-perpendicular.x*punto.x-perpendicular.y*punto.y-perpendicular.z*punto.z)));
    std::cout <<"zplane: "<< zplane << std::endl;
+   //std::cout << "calculo: " << (((camara->far-camara->near)*algoritmo->mayor_profundidad)+camara->near) << std::endl;
    std::cout <<"punto: "<< punto.x << "," << punto.y << "," << punto.z << std::endl;
    std::cout <<"plano: "<< plano.x << "," << plano.y << "," << plano.z << "," << plano.w << std::endl;
-      std::cout << "OHO" << std::endl;
+     std::cout << "OHO" << std::endl;
       result_shader_ssbo->use();
       result_shader_ssbo->updateSSBOData(primitivas);
       result_shader_ssbo->sendSSBOData();
       result_shader_ssbo->setvec4float("plane",plano);
-      result_shader_ssbo->setFloat("d",1.0f);
       result_shader_ssbo->stop();
 
       std::cout << "OHO" << std::endl;
+
+   std::vector<int> indice_vertices;
+   for(int i=0;i<primitivas.size();i++){
+      Tupla3i vertices(Escultura->f[primitivas[i]]);
+      for(int j=0;j<3;j++){
+         if(std::find(indice_vertices.begin(),indice_vertices.end(),vertices[j])==indice_vertices.end()){
+            indice_vertices.push_back(vertices[j]);
+         }
+      }
+   }
+   std::cout << "Vertices afectados " << indice_vertices.size() << std::endl;
+
+
 }
+
 
 
 
