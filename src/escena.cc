@@ -24,7 +24,8 @@ Escena::Escena()
     // crear los objetos de la escena....
     // .......completar: ...
     // .....
-    Escultura= new ObjPLY("plys/PLY_Pasha.ply");
+    //Escultura= new ObjPLY("plys/PLY_Pasha.ply");
+    Escultura= new ObjPLY("ply_modificado.ply");
     //Escultura= new ObjPLY("plys/beethoven.ply");
     camara=new Camara(PERSPECTIVA,{0.0,0.0,60.0},{0.0,0.0,-1.0});
 
@@ -82,7 +83,7 @@ void Escena::dibujar()
     if(framebuffer1->is_complete()){
    	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );  
       glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-      if(!algoritmo->isOver()){
+      if(control==SELECCION){
       shader->use(); 
       shader->setMatrix4Float("mvp",1,false,(float*)glm::value_ptr(mvp));
       shader->setInt("primitive_num",(int) Escultura->num_caras);
@@ -92,13 +93,24 @@ void Escena::dibujar()
       framebuffer1->getDepthData();
       shader->stop();
       } else{
+      if(control==CONVEXIDAD_TRANSFORMADA){
       result_vertex_shader->use(); 
       result_vertex_shader->setMatrix4Float("mvp",1,false,(float*)glm::value_ptr(mvp));
       result_vertex_shader->setFloat("d",dvalue);
       Escultura->draw();
       framebuffer1->getColorData();
       framebuffer1->getDepthData();
+      result_vertex_shader->stop();
+      }
+      if(control==VISUALIZACION_CONVEXIDAD){
+      result_shader_ssbo->use(); 
+      result_shader_ssbo->setMatrix4Float("mvp",1,false,(float*)glm::value_ptr(mvp));
+      Escultura->draw();
+      framebuffer1->getColorData();
+      framebuffer1->getDepthData();
       result_shader_ssbo->stop();
+      }
+
       }
 
     }
@@ -142,8 +154,10 @@ bool Escena::teclaPulsada( unsigned char tecla, int x, int y )
    switch( toupper(tecla) )
    {
       case 'Q' :
-         if (control!=SELECCION)
-            control=SELECCION;            
+         if (control!=SELECCION){
+            control=SELECCION;
+            seleccionado=false;  
+         }        
          else {
             salir=true ;
          }
@@ -165,6 +179,10 @@ bool Escena::teclaPulsada( unsigned char tecla, int x, int y )
             control=CONVEXIDAD_TRANSFORMADA;
          }
          break ;
+       case 'G':
+       if(seleccionado==true && control==CONVEXIDAD_TRANSFORMADA){
+         save_modified_PLY("ply_modificado.ply");
+       }
        case '+':
          if(camara->isLocked()){
             camara->avanzar(true);
@@ -291,6 +309,8 @@ void Escena::clickRaton( int boton, int estado, int x, int y)
          algoritmo->setValues(framebuffer1->colordata,framebuffer1->depthdata);
          algoritmo->run();
          primitivas_resultados();
+         control=VISUALIZACION_CONVEXIDAD;
+         seleccionado=true;
       }
       }
    }
@@ -342,7 +362,7 @@ void Escena::primitivas_resultados(){
    float factor=zplane/perpendicular.z;
    std::cout << "factor: " << factor << std::endl;
    glm::vec3 punto=(perpendicular*factor)-camara->eye;
-   glm::vec4 plano=glm::vec4(perpendicular.x,perpendicular.y,perpendicular.z,((-perpendicular.x*punto.x-perpendicular.y*punto.y-perpendicular.z*punto.z)));
+   plano=glm::vec4(perpendicular.x,perpendicular.y,perpendicular.z,((-perpendicular.x*punto.x-perpendicular.y*punto.y-perpendicular.z*punto.z)));
    std::cout <<"zplane: "<< zplane << std::endl;
    //std::cout << "calculo: " << (((camara->far-camara->near)*algoritmo->mayor_profundidad)+camara->near) << std::endl;
    std::cout <<"punto: "<< punto.x << "," << punto.y << "," << punto.z << std::endl;
@@ -355,25 +375,50 @@ void Escena::primitivas_resultados(){
       result_shader_ssbo->stop();
 
       std::cout << "OHO" << std::endl;
-
-   std::vector<int> indice_vertices;
+   vertices_afectados.clear();
    for(int i=0;i<primitivas.size();i++){
       Tupla3i vertices(Escultura->f[primitivas[i]]);
       for(int j=0;j<3;j++){
-         if(std::find(indice_vertices.begin(),indice_vertices.end(),vertices[j])==indice_vertices.end()){
-            indice_vertices.push_back(vertices[j]);
+         if(std::find(vertices_afectados.begin(),vertices_afectados.end(),vertices[j])==vertices_afectados.end()){
+            vertices_afectados.push_back(vertices[j]);
          }
       }
    }
-   std::cout << "Vertices afectados " << indice_vertices.size() << std::endl;
+   std::cout << "Vertices afectados " << vertices_afectados.size() << std::endl;
    result_vertex_shader->use();
-      result_vertex_shader->updateSSBOData(indice_vertices);
+      result_vertex_shader->updateSSBOData(vertices_afectados);
       result_vertex_shader->sendSSBOData();
       result_vertex_shader->setvec4float("plane",plano);
       result_vertex_shader->stop();
 
-
 }
+
+
+void Escena::save_modified_PLY(const std::string & nombre_archivo){
+   std::vector<Tupla3f> nuevov=Escultura->v;
+   std::vector<Tupla3i> nuevoi=Escultura->f;
+   for(int i=0;i<vertices_afectados.size();i++){
+      Tupla3f vertice=Escultura->v[vertices_afectados[i]];
+      float lambda = (((plano.x * vertice[0]) + (plano.y * vertice[1]) + (plano.z * vertice[2]) + plano.w) / (-1 * (pow(plano.x, 2) + pow(plano.y, 2) + pow(plano.z, 2))));
+      Tupla3f Q = Tupla3f(vertice[0] + (plano.x * lambda), vertice[1] + (plano.y * lambda), vertice[2] + (plano.z * lambda));
+      Tupla3f p_res = ((vertice + dvalue * (vertice - Q)));
+      nuevov[vertices_afectados[i]]=p_res;
+   }
+   std::ofstream nuevofile(nombre_archivo);
+   std::cout << "Ejecuto esto" << std::endl;
+   if(nuevofile.is_open()){
+            std::cout << "Ejecuto esto" << std::endl;
+      nuevofile << "ply\nformat ascii 1.0\nelement vertex " << nuevov.size() << "\nproperty float32 x\nproperty float32 y\nproperty float32 z\nelement face " << nuevoi.size() <<"\nproperty list uchar int vertex_indices\nend_header\n";
+      for (int i=0;i<nuevov.size();i++){
+         nuevofile << nuevov[i][0] << " " <<nuevov[i][1] << " " << nuevov[i][2] << "\n";
+      }
+         for (int i=0;i<nuevoi.size();i++){
+         nuevofile << "3 " << nuevoi[i][0] << " " <<nuevoi[i][1] << " " << nuevoi[i][2] << "\n";
+      }
+      nuevofile.close();
+   }
+}
+
 
 
 

@@ -12,6 +12,7 @@
 #include "ShaderUBO.h"
 #include "ShaderSSBO.h"
 #include "ShadervertexSSBO.h"
+#include <fstream>
 
 typedef enum {SELECCION,VISUALIZACION_CONVEXIDAD,CONVEXIDAD_TRANSFORMADA} visualizacion;
 class Escena
@@ -49,7 +50,6 @@ class Escena
    void clear_window();
 
    Camara * camara;
-   menu modoMenu=NADA;
    Shader* shader;
    Shader* result_shader;
    Shader* render_shader;
@@ -63,6 +63,8 @@ class Escena
    Quad * renderQuad=nullptr;
    Algoritmo * algoritmo=nullptr;
    float dvalue=0.0f;
+   glm::vec4 plano;
+   std::vector<int> vertices_afectados;
 
    
    public:
@@ -83,7 +85,7 @@ class Escena
    void updatemvp(Shader * shader);
    float* getMVP(float* mv, float* p);
    void primitivas_resultados();
-   void save_modified_PLY();
+   void save_modified_PLY(const std::string & nombre_archivo);
 
 };
 #endif

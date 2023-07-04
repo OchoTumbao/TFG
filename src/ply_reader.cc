@@ -182,6 +182,7 @@ void leer_caras
       //cout << "reading face #" << ifa << " with " << nv << " vertexes: " ;
 
       if ( nv != 3 )
+      
          error("encontrada una cara con un número de vértices distinto del prefijado 3");
 
       long long
