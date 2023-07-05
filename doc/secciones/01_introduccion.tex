@@ -1,15 +1,52 @@
 \chapter{Introducción}
 
+\section{Introducción}
 El objetivo de este proyecto es la creación de un software capaz de transformar de forma autonoma un modelo 3D detallado de una escultura cualquiera en una escultura que inmita el estilo del escultor Pablo Emilio Gargallo Catalán.
-Este estilo se caracteriza principalmente por jugar con las concavidades y las convexidades de las esculturas para obtener efectos no obtenibles por medio de tecnicas tradicionales. Nuestro punto focal de interes va a ser precisamente
-lograr transformar de forma automática las convexidades de los modelos 3D en concavidades. Para permitirnos hacer esto vamos a utilizar varios recursos de los graficos por ordenador.
+Este estilo se caracteriza principalmente por jugar con las concavidades y las convexidades de las esculturas para obtener efectos no obtenibles por medio de tecnicas tradicionales.
 
-El termino graficos por ordenador se refiere a un campo multidisciplinar donde se agrupa cualquier disciplina que contribuye a la creación y visualización de representaciones pictoricas enteremante en un ordenador.
-Esto engloba una variedad de campos.Los relevantes para nuestro proyecto 
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{imagenes/maternidad_gargallo.jpg}
+    \caption{Ejemplo de una escultura de Pablo Gargallo}
+\end{figure}
+
+
+Nuestro punto focal de interes va a ser precisamente lograr transformar las convexidades de los modelos 3D en concavidades. Para permitirnos hacer esto vamos a utilizar varios recursos de los graficos por ordenador.
+
+El termino graficos por ordenador se refiere a un campo multidisciplinar donde se agrupa cualquier disciplina que contribuye a la creación y visualización de representaciones pictoricas enteremante en un ordenador\cite{Foley_1995}.
+Esto engloba una variedad de campos donde hay discusión sobre si pertenecen o no al ambito de los graficos por ordenador.Sin embargo hay 3 campos principales en los cuales hay consenso general de que forman parte de la disciplina.
 \begin{list}{.}{}
     \item El modelado, que es la rama que lidia con la representación matematica de la especificación de la forma y la apariencia de una representación pictorica concreta de forma que sea interpetable para un ordenador
-    \item El Renderizado, que lidia con la creación de las representaciones 2D que visualizamos en la pantalla del espacio tridimensional con el que trabajamos
+    \item El Renderizado, que lidia con la creación de las representaciones 2D finales de nuestros modelos 3D tras la aplicación de luces, texturas y materiales 
+    \item La animación que es la tecnica para crear ilusión de movimiento a partir de la secuenciación de Imagenes. Dentro de esta rama se utilizan conceptos del renderizado y el modelado pero se le añade el factor clave del movimiento en el tiempo
 \end{list} \cite{marschner_fundamentals_2018}
 
+Para nuestro proyecto los campos relevantes son solo el modelado y el renderizado. Puesto que al final del proyecto nuestro objetivo es poder visualizar de forma dinamica esa escultura "Gargallizada" y ademas poder exportar una representación de la escultura luego de ser modificada para poder ser impresa en 3D.
+
+La capacidad de poder visualizar los graficos por ordenador necesitamos generar una imagen sintetica en dos dimensiones que pueda ser representada sobre la pantalla del ordenador. Para ello se definen todos los elementos del entorno tridimensional, siendo esto no solo los modelos tridimensionales sino tambien la presencia de luces. Las cuales de hecho son obligatorias. Pues sin ellas todo se vería oscuro. 
+En su defecto las API de graficos por ordenador utilizan una luz ambiente que aplica de igual forma a todos los elementos. Y finalmente el ultimo elemento necesario es una camara que nos permite crear un sentido de perspectiva y colocar un punto de referencia desde el cual se esta visualizando la escena.
+
+Una vez todos los elementos estan definidos la API de graficos que vayamos a utilizar realizara una serie de operaciones para conseguir esa representacion pictorica bidimensional de nuestro modelo. Esta serie de operaciones es lo que conocemos como "pipeline" de graficos. De forma simple esta serie de operaciones son fijas y para cualquier modelo seran siempre las mismas. Este pipeline de transformaciones dependera del proceso que utilice la API de graficos para generar
+la imagen bidimensional final. En  nuestro caso para este trabajo estamos utilizando OpenGL, la cual es una API de graficos que utiliza rasterización para el renderizado. Pero existen otras alternativas que recientemente estan cobrando mas popularidad como el Ray Tracing. Como hemos mencionado previamente en este trabajo hemos decidido emplear OpenGL como API de graficos. Esto se debe principalmente a dos motivos. El primero es uno de familiaridad puesto que OpenGL es la API de graficos
+que se enseña en el grado. Ademas de eso el segundo motivo es que OpenGL es la API mas extendida entre todas las alternatives libres y multiplatadorma. Y aunque tiene competidores directos como la API Direct3D estos son privativos. Cabe mencionar que existe un estandar alternativo a OpenGL mas moderno llamado Vulkan, el cual permite un mayor control sobre lo que ocurre en la tarjeta grafica y ofrece un mayor rendimiento. Sin embargo el punto donde las diferencias de rendimiento entre Vulkan y OpenGL 
+se hace notable es en proyectos mucho mas ambiciosos como videojuegos triple A con graficos hiperrealistas. Para nuestro proyecto elegir una u otra es indiferente. Y por tanto decidimos utilizar la API que ya conociamos y teniamos cierta experiencia previa.
+
+Explicación Pipeline fija de graficos
+
+Explicación Pipeline programable de graficos
+
+Detección de profundidades
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{imagenes/Pipeline_Fija.png}
+    \caption{Pipeline de graficos fija de OpenGL}
+    \cite{freeSI03graphicsPipeline}
+\end{figure}
+
+En este caso el pipeline de graficos se compone 
+
+\section{Motivación}
 
 Este proyecto es software libre, y está liberado con la licencia \cite{gplv3}.
+
